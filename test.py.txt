@@ -1,0 +1,82 @@
+from hub import light_matrix, port, motion_sensor, temperature
+import distance_sensor
+import motor_pair
+import runloop
+from app import *
+import motor
+from color import *
+import time
+import sys
+
+WHEEL_CIRCUMFERENCE = 27.6 # cm
+
+def degrees_for_distance(distance_cm):
+    return int((distance_cm/WHEEL_CIRCUMFERENCE) * 360)
+
+async def correct_with_backoff(starting_secs, distance_degs, speed):
+    count = 0
+    while (True):
+        yaw_angle = motion_sensor.tilt_angles()[0]
+        linegraph.plot(BLUE, time.time()-starting_secs, yaw_angle)
+        linegraph.plot(RED, time.time()-starting_secs, motion_sensor.tilt_angles()[1])
+        linegraph.plot(GREEN, time.time()-starting_secs, motion_sensor.tilt_angles()[2])
+        linegraph.plot(YELLOW, time.time()-starting_secs, motor.relative_position(port.A))
+        count += 1
+        motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, -30, speed, speed)
+        while abs(yaw_angle) > 10:
+            if yaw_angle < 0:
+                motor_pair.move_tank(motor_pair.PAIR_1, speed, -speed)
+            else:
+                motor_pair.move_tank(motor_pair.PAIR_1, -speed, speed)        
+        print("count=",count)
+        if (count >= 10):
+            break
+
+async def main():
+    # write your code here
+    starting_secs = time.time()
+    linegraph.clear_all()
+    #await light_matrix.write("Skibidi")
+    motor_pair.pair(motor_pair.PAIR_1, port.A, port.E)
+    motion_sensor.reset_yaw(0)
+    speed = 200
+    light_matrix.write(str(temperature()))
+    light_matrix.show_image(light_matrix.IMAGE_DUCK)
+    linegraph.clear_all()
+    #backoff_result = correct_with_backoff(starting_secs, degrees_for_distance(20), speed)
+    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, degrees_for_distance(20), speed, speed) 
+    motor.reset_relative_position(port.A, 0)    
+    motor_pair.move_tank(motor_pair.PAIR_1, speed, speed)
+    while abs(motor.relative_position(port.A)) < degrees_for_distance(20):
+        yaw_angle = motion_sensor.tilt_angles()[0]
+        print("yaw_angle=", yaw_angle, " absolute_position=", motor.absolute_position(port.A), "degrees_stop=", degrees_for_distance(20))
+        # if abs(yaw_angle) > 15:
+        #     motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, -30, speed, speed)
+        #     while abs(yaw_angle) > 10:
+        #         if yaw_angle < 0:
+        #             motor_pair.move_tank(motor_pair.PAIR_1, speed, -speed)
+        #         else:
+        #             motor_pair.move_tank(motor_pair.PAIR_1, -speed, speed)    
+    await runloop.until(lambda: distance_sensor.distance(port.B) == 100)
+    motor_pair.stop(motor_pair.PAIR_1,stop=motor.SMART_BRAKE)
+    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, degrees_for_distance(-20), speed, speed)
+    sys.exit(0)
+    #     if abs(yaw_angle) > 10:
+    #         motor_pair.stop(motor_pair.PAIR_1)
+    #         motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, -30, speed, speed)
+            # while abs(yaw_angle) > 10:
+            #     if yaw_angle < 0:
+            #         motor_pair.move_tank(motor_pair.PAIR_1, speed, -speed)
+            #     else:
+            #         motor_pair.move_tank(motor_pair.PAIR_1, -speed, speed)
+            #     motion_sensor.reset_yaw(0)
+            #     yaw_angle = motion_sensor.tilt_angles()[0]
+            #     linegraph.plot(BLUE, temperature(), yaw_angle)
+                 
+    #motor_pair.move(motor_pair.PAIR_1, 0, velocity=280)
+    #while motor.absolute_position(port.A) < 1000:
+    #    pass
+
+    
+
+runloop.run(main())
