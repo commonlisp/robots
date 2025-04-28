@@ -5,7 +5,7 @@ import runloop
 WheelCircumferenceCm = 27.6
 
 def degreesFromDistanceCentimeters(distanceCm):
-    return int(round(distanceCm*360/WheelCircumferenceCm))
+    return int(distanceCm*360/WheelCircumferenceCm)
 
 async def main():
     await light_matrix.write("Hi!")
@@ -15,5 +15,8 @@ async def main():
     degrees = degreesFromDistanceCentimeters(40)
     print(degrees)
     await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, degrees, velocity, velocity)
-
+    for i in range(4):
+        await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, degreesFromDistanceCentimeters(6), velocity, -velocity)
+        degrees = degreesFromDistanceCentimeters(10)
+        await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, degrees, velocity, velocity)
 runloop.run(main())
