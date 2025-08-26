@@ -3,6 +3,8 @@ import runloop
 import motor_pair, motor
 import math
 import time
+import color_sensor
+import color
 
 
 
@@ -139,14 +141,44 @@ async def market_mission():
     await gyro_move_straight(80)
     #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(50), velocity, velocity, stop=motor.HOLD)
 
-
+#
 async def ship_mission():
-    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(38), velocity, velocity, stop=motor.HOLD)
+    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(39), velocity, velocity, stop=motor.HOLD)
     await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, -dist_cm_to_degrees(10), velocity, velocity, stop=motor.HOLD)
     await turn_slant()
-    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(25), velocity, velocity, stop=motor.HOLD)
+    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(13), velocity, velocity, stop=motor.HOLD)
     await turn_slant(right=True)
-    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(15), velocity, velocity, stop=motor.HOLD)
+    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(10), velocity, velocity, stop=motor.HOLD)
+    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(-55), velocity, velocity, stop=motor.HOLD)
+right_sensor = port.E
+right_motor = port.F
+left_sensor = port.B
+left_motor = port.A
+
+def all_done_squaring():
+    return ((motor.velocity(left_motor) is 0) and (motor.velocity(right_motor) is 0))
+
+async def move_until_black(motor_port, color_port, direction):
+    motor.run(motor_port, velocity * direction)
+    while color_sensor.reflection(color_port) > 50:
+        await runloop.sleep_ms(50)
+    motor.stop(motor_port)
+
+async def square_on_black_white_line():
+    #motor_pair.move_tank(motor_pair.PAIR_1, velocity, velocity)
+    # port.F is left color sensor, port.D is right
+    a = move_until_black(left_motor, left_sensor, -1)
+    b = move_until_black(right_motor, right_sensor, 1)
+    runloop.run(*[a,b])
+    await runloop.until(all_done_squaring)
+         
+# pre: lined up on SW corner with two blue frames + yellow, aligned to north
+async def square_on_mine_shaft():
+    await gyro_move_straight(95)
+    await gyro_move_straight(-3)
+    await turn_right()
+    await square_on_black_white_line()
+
 
 async def main():
     motor_pair.pair(motor_pair.PAIR_1, port.A, port.F)
@@ -155,7 +187,9 @@ async def main():
     motion_sensor.reset_yaw(0)
     await motor.run_for_degrees(rear_arm_port, 180, 100)
 
-    #await ship_mission()
+    #await square_on_mine_shaft()
+    await ship_mission()
+    return
     #await gyro_move_straight(20)
     #return
 
@@ -186,4 +220,3 @@ async def main():
     await market_mission()
 
 runloop.run(main())
-
