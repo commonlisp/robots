@@ -171,7 +171,13 @@ async def square_on_black_white_line():
     b = move_until_black(right_motor, right_sensor, 1)
     runloop.run(*[a,b])
     await runloop.until(all_done_squaring)
-         
+
+async def mid_board():
+    #await gyro_move_straight(79) # aligns on black-white line
+    await gyro_move_straight(76)
+    #await turn_left()
+    #await gyro_move_straight(12)
+
 # pre: lined up on SW corner with two blue frames + yellow, aligned to north
 async def square_on_mine_shaft():
     await gyro_move_straight(95)
@@ -189,6 +195,7 @@ async def main():
 
     #await square_on_mine_shaft()
     await ship_mission()
+    #await mid_board()
     return
     #await gyro_move_straight(20)
     #return
