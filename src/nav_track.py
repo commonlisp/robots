@@ -148,7 +148,7 @@ async def ship_mission():
     await turn_slant()
     await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(13), velocity, velocity, stop=motor.HOLD)
     await turn_slant(right=True)
-    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(10), velocity, velocity, stop=motor.HOLD)
+    await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(13), velocity, velocity, stop=motor.HOLD)
     await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(-55), velocity, velocity, stop=motor.HOLD)
 right_sensor = port.E
 right_motor = port.F
