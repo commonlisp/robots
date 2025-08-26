@@ -141,7 +141,7 @@ async def market_mission():
     await gyro_move_straight(80)
     #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(50), velocity, velocity, stop=motor.HOLD)
 
-#
+# Aligned east facing from SW corner with yellow-horizontal blue-vertical black frames jig
 async def ship_mission():
     await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(39), velocity, velocity, stop=motor.HOLD)
     await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, -dist_cm_to_degrees(10), velocity, velocity, stop=motor.HOLD)
@@ -197,7 +197,7 @@ async def main():
     # await motor.run_for_degrees(port.E, -120, 300)
     # return 
     #linegraph.clear(color.BLUE)
-    5# while True:-
+    # while True:-
     #     #print("tilt angles yaw {} {}".format(motion_sensor.tilt_angles()[0], time.ticks_ms()))
     #     angles = motion_sensor.tilt_angles()
     #     #print("tilt angles {} {} {}".format(angles[0], angles[1], angles[2]))
