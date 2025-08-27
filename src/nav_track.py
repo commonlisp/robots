@@ -1,20 +1,20 @@
 from hub import light_matrix, port, motion_sensor
 import runloop
 import motor_pair, motor
-import math
 import time
 import color_sensor
-import color
-
-
-
 import color
 from app import linegraph
 
 
-wheel_circumference = 27.6
+wheel_circumference = 27.6 # in centimeters
 velocity = 100 # in degrees/sec
 rear_arm_port = port.C
+
+right_sensor = port.E
+right_motor = port.F
+left_sensor = port.B
+left_motor = port.A
 
 def dist_cm_to_degrees(dist):
     return round(360*dist/wheel_circumference)
@@ -22,22 +22,19 @@ def dist_cm_to_degrees(dist):
 def yaw_degrees():
     return abs(motion_sensor.tilt_angles()[0]/10) # Note that tilt_angles yaw is in tenths of degrees
 
-async def turn_right():
+async def turn(direction): # expecting direction = 1 for right and -1 for left
     motion_sensor.reset_yaw(0)
-    while yaw_degrees() != 0:
+    while yaw_degrees() != 0: # This is needed since reset_yaw might still not be complete when yaw_degrees is called
         runloop.sleep_ms(10)
     while yaw_degrees() < 90:
-        motor_pair.move(motor_pair.PAIR_1, 100)
+        motor_pair.move(motor_pair.PAIR_1, 100*direction)
     motor_pair.stop(motor_pair.PAIR_1, stop=motor.HOLD)
 
+async def turn_right():
+    await turn(1)
+
 async def turn_left():
-    motion_sensor.reset_yaw(0)
-    while yaw_degrees() != 0:
-        runloop.sleep_ms(10)
-    print("yaw degrees {}".format(yaw_degrees()))
-    while yaw_degrees() < 90:
-        motor_pair.move(motor_pair.PAIR_1, -100)
-    motor_pair.stop(motor_pair.PAIR_1, stop=motor.HOLD)
+    await turn(-1)
 
 async def turn_slant(degrees=45,right=False):
     motion_sensor.reset_yaw(0)
@@ -56,10 +53,8 @@ async def gyro_move_straight(dist_cm):
     motor.reset_relative_position(port.A, 0)
     while yaw_degrees() != 0:
         runloop.sleep_ms(10)
-    print("degrees target={}".format(dist_cm_to_degrees(dist_cm)))
     linegraph.clear(color.BLUE)
     while abs(motor.relative_position(port.A)) < dist_cm_to_degrees(dist_cm):
-        #print(motor.relative_position(port.A))
         motor_pair.move_tank(motor_pair.PAIR_1, velocity, velocity)
         error = round(yaw_degrees())
         left = motion_sensor.tilt_angles()[0] > 0
@@ -73,73 +68,7 @@ async def gyro_move_straight(dist_cm):
                 runloop.sleep_ms(10)            
             error = round(yaw_degrees())
             linegraph.plot(color.BLUE,time.ticks_ms(),error)
-            #motor_pair.stop(motor_pair.PAIR_1, stop=motor.HOLD)
     motor_pair.stop(motor_pair.PAIR_1, stop=motor.HOLD)
-    
-async def brush_mission():
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(60), velocity, velocity, stop=motor.HOLD)
-    await gyro_move_straight(60)
-    await turn_right()
-
-    await motor.run_for_degrees(rear_arm_port, -150, 300)
-    await motor.run_for_degrees(rear_arm_port, 240, 300)
-    
-    await turn_left()
-
-async def reveal_mission():
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(15), velocity, velocity, stop=motor.HOLD)
-    await gyro_move_straight(15)
-    await turn_slant()
-    await motor.run_for_degrees(rear_arm_port, -150, 300)
-    await turn_slant(degrees=60, right=True)
-    await turn_right()
-
-async def mine_cart_mission():
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(30), velocity, velocity, stop=motor.HOLD)
-    await gyro_move_straight(30)
-    await turn_left()
-    await motor.run_for_degrees(rear_arm_port, 240, 300)
-    await turn_right()
-    await turn_slant()
-
-async def restore_statue_mission():
-    await gyro_move_straight(2)
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(2), velocity, velocity, stop=motor.HOLD)
-    await turn_slant(right=True)
-    await gyro_move_straight(2)
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(2), velocity, velocity, stop=motor.HOLD)
-    await turn_slant(right=False)
-    await gyro_move_straight(9)
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(9), velocity, velocity, stop=motor.HOLD)
-    await turn_slant(right=True)
-    await gyro_move_straight(30)
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(30), velocity, velocity, stop=motor.HOLD)
-    await turn_right()
-    await motor.run_for_degrees(rear_arm_port, -150, 300)
-    await turn_left()
-
-async def scale_mission():
-    await gyro_move_straight(20)
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(20), velocity, velocity, stop=motor.HOLD)
-    await turn_right()
-    await motor.run_for_degrees(rear_arm_port, 240, 300)
-
-    await turn_left()
-
-async def market_mission():
-    #await turn_slant()
-    await gyro_move_straight(40)
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(40), velocity, velocity, stop=motor.HOLD)
-    await turn_left()
-    await motor.run_for_degrees(rear_arm_port, -150, 300)
-
-    await turn_right()
-    await gyro_move_straight(30)
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(30), velocity, velocity, stop=motor.HOLD)
-    await motor.run_for_degrees(rear_arm_port, 240, 300)
-    await turn_right()
-    await gyro_move_straight(80)
-    #await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(50), velocity, velocity, stop=motor.HOLD)
 
 # Aligned east facing from SW corner with yellow-horizontal blue-vertical black frames jig
 async def ship_mission():
@@ -150,10 +79,59 @@ async def ship_mission():
     await turn_slant(right=True)
     await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(13), velocity, velocity, stop=motor.HOLD)
     await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, dist_cm_to_degrees(-55), velocity, velocity, stop=motor.HOLD)
-right_sensor = port.E
-right_motor = port.F
-left_sensor = port.B
-left_motor = port.A
+    
+async def brush_mission():
+    await gyro_move_straight(60)
+    await turn_right()
+
+    await motor.run_for_degrees(rear_arm_port, -150, 300)
+    await motor.run_for_degrees(rear_arm_port, 240, 300)
+    
+    await turn_left()
+
+async def reveal_mission():
+    await gyro_move_straight(15)
+    await turn_slant()
+    await motor.run_for_degrees(rear_arm_port, -150, 300)
+    await turn_slant(degrees=60, right=True)
+    await turn_right()
+
+async def mine_cart_mission():
+    await gyro_move_straight(30)
+    await turn_left()
+    await motor.run_for_degrees(rear_arm_port, 240, 300)
+    await turn_right()
+    await turn_slant()
+
+async def restore_statue_mission():
+    await gyro_move_straight(2)
+    await turn_slant(right=True)
+    await gyro_move_straight(2)
+    await turn_slant(right=False)
+    await gyro_move_straight(9)
+    await turn_slant(right=True)
+    await gyro_move_straight(30)
+    await turn_right()
+    await motor.run_for_degrees(rear_arm_port, -150, 300)
+    await turn_left()
+
+async def scale_mission():
+    await gyro_move_straight(20)
+    await turn_right()
+    await motor.run_for_degrees(rear_arm_port, 240, 300)
+
+    await turn_left()
+
+async def market_mission():
+    await gyro_move_straight(40)
+    await turn_left()
+    await motor.run_for_degrees(rear_arm_port, -150, 300)
+
+    await turn_right()
+    await gyro_move_straight(30)
+    await motor.run_for_degrees(rear_arm_port, 240, 300)
+    await turn_right()
+    await gyro_move_straight(80)
 
 def all_done_squaring():
     return ((motor.velocity(left_motor) is 0) and (motor.velocity(right_motor) is 0))
@@ -191,12 +169,13 @@ async def main():
 
     motion_sensor.set_yaw_face(motion_sensor.FRONT)
     motion_sensor.reset_yaw(0)
-    await motor.run_for_degrees(rear_arm_port, 180, 100)
+    await motor.run_for_degrees(rear_arm_port, 180, 100) # resets rear arm counterclockwise so it always starts from same spot
+    await ship_mission()
+
+    return
 
     #await square_on_mine_shaft()
-    await ship_mission()
     #await mid_board()
-    return
     #await gyro_move_straight(20)
     #return
 
