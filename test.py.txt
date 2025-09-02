@@ -8,7 +8,7 @@ from color import *
 import time
 import sys
 
-WHEEL_CIRCUMFERENCE = 27.6 # cm
+WHEEL_CIRCUMFERENCE = 16.2 # cm
 
 def degrees_for_distance(distance_cm):
     return int((distance_cm/WHEEL_CIRCUMFERENCE) * 360)
