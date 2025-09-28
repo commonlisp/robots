@@ -61,7 +61,6 @@ async def gyro_move_straight(dist_cm):
         linegraph.plot(color.BLUE,time.ticks_ms(),error)
         if error > 15:
             motor_pair.stop(motor_pair.PAIR_1)
-            await motor_pair.move_tank_for_degrees(motor_pair.PAIR_1, -25, velocity, velocity)
             await turn_slant(degrees=error, right=left)
             motion_sensor.reset_yaw(0)
             while yaw_degrees() != 0:
